@@ -12,13 +12,13 @@ export default async function StudentDashboardPage() {
     const { data: student, error } = await supabase
         .from("students")
         .select(`
-      id,
-      name,
-      subject,
-      current_level,
-      learning_goals,
-      weak_areas
-    `)
+            id,
+            name,
+            subject,
+            current_level,
+            learning_goals,
+            weak_areas
+        `)
         .eq("user_id", currentUser.user.id)
         .single();
 
@@ -30,12 +30,12 @@ export default async function StudentDashboardPage() {
         await supabase
             .from("sessions")
             .select(`
-        id,
-        topic,
-        starts_at,
-        ends_at,
-        status
-      `)
+                id,
+                topic,
+                starts_at,
+                ends_at,
+                status
+            `)
             .eq("student_id", student.id)
             .order("starts_at", {
                 ascending: false,

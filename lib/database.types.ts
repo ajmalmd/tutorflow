@@ -258,7 +258,75 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          live_notes: string
+          reviewed_at: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          student_id: string
+          topic: string
+          tutor_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      save_session_live_notes: {
+        Args: { p_live_notes: string; p_session_id: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          live_notes: string
+          reviewed_at: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          student_id: string
+          topic: string
+          tutor_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      start_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          live_notes: string
+          reviewed_at: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          student_id: string
+          topic: string
+          tutor_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       session_status: "scheduled" | "in_progress" | "completed" | "ai_reviewed"
