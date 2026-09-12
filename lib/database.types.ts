@@ -281,6 +281,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_session_debrief_and_review: {
+        Args: {
+          p_homework: Json
+          p_model: string
+          p_next_focus: string
+          p_session_id: string
+          p_summary: string
+        }
+        Returns: {
+          created_at: string
+          homework: Json
+          id: string
+          model: string | null
+          next_focus: string
+          session_id: string
+          summary: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "session_debriefs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       save_session_live_notes: {
         Args: { p_live_notes: string; p_session_id: string }
         Returns: {
@@ -300,6 +324,30 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      save_session_plan: {
+        Args: {
+          p_lesson_outline: Json
+          p_model: string
+          p_objectives: Json
+          p_practice_questions: Json
+          p_session_id: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          lesson_outline: Json
+          model: string | null
+          objectives: Json
+          practice_questions: Json
+          session_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "session_plans"
           isOneToOne: true
           isSetofReturn: false
         }

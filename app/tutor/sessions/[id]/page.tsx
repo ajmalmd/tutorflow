@@ -8,6 +8,13 @@ import { SessionStatusBadge } from "@/components/sessions/session-status-badge";
 import { SessionLifecycleActions } from "@/components/sessions/session-lifecycle-actions";
 
 import { LiveNotes } from "@/components/sessions/live-notes";
+import { AISessionPlan } from "@/components/sessions/ai-session-plan";
+import { GeneratePlanButton } from "@/components/sessions/generate-plan-button";
+import { AISessionReview } from "@/components/sessions/ai-session-review";
+import { GenerateReviewButton } from "@/components/sessions/generate-review-button";
+
+import { SessionPlanSchema } from "@/lib/ai/schemas/session-plan";
+import { SessionDebriefSchema } from "@/lib/ai/schemas/session-debrief";
 
 export const instant = false;
 
@@ -34,6 +41,7 @@ export default async function TutorSessionDetailPage({
     // requirement explicit.
     // -----------------------------------------------------
 
+    // fetch session
     const {
         data: session,
         error: sessionError,
@@ -62,6 +70,7 @@ export default async function TutorSessionDetailPage({
         notFound();
     }
 
+    // fetch student
     const {
         data: student,
         error: studentError,
@@ -84,6 +93,85 @@ export default async function TutorSessionDetailPage({
     if (!student) {
         notFound();
     }
+
+    // fetch session plan
+    const {
+        data: sessionPlan,
+        error: sessionPlanError,
+    } = await supabase
+        .from("session_plans")
+        .select(`
+            id,
+            objectives,
+            lesson_outline,
+            practice_questions,
+            model,
+            created_at
+        `)
+        .eq("session_id", session.id)
+        .maybeSingle();
+
+    if (sessionPlanError) {
+        throw new Error(
+            sessionPlanError.message,
+        );
+    }
+
+
+    // fetch session debrief
+    const {
+        data: sessionDebrief,
+        error: sessionDebriefError,
+    } = await supabase
+        .from("session_debriefs")
+        .select(`
+            id,
+            summary,
+            homework,
+            next_focus,
+            model,
+            created_at
+        `)
+        .eq(
+            "session_id",
+            session.id,
+        )
+        .maybeSingle();
+
+    if (sessionDebriefError) {
+        throw new Error(
+            sessionDebriefError.message,
+        );
+    }
+
+
+    const parsedSessionPlan =
+        sessionPlan
+            ? SessionPlanSchema.safeParse({
+                objectives:
+                    sessionPlan.objectives,
+
+                lesson_outline:
+                    sessionPlan.lesson_outline,
+
+                practice_questions:
+                    sessionPlan.practice_questions,
+            })
+            : null;
+
+    const parsedSessionDebrief =
+        sessionDebrief
+            ? SessionDebriefSchema.safeParse({
+                summary:
+                    sessionDebrief.summary,
+
+                homework:
+                    sessionDebrief.homework,
+
+                next_focus:
+                    sessionDebrief.next_focus,
+            })
+            : null;
 
 
     const startsAt = new Date(session.starts_at);
@@ -198,10 +286,39 @@ export default async function TutorSessionDetailPage({
                                     </dd>
                                 </div>
                             )}
+
+                            {session.reviewed_at && (
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        AI reviewed
+                                    </dt>
+
+                                    <dd className="mt-1">
+                                        {new Date(
+                                            session.reviewed_at,
+                                        ).toLocaleString()}
+                                    </dd>
+                                </div>
+                            )}
                         </dl>
                     </section>
 
                     <section className="rounded-xl border bg-white p-6">
+
+                        <div className="mb-4">
+                            {parsedSessionPlan?.success && (
+                                <AISessionPlan plan={parsedSessionPlan.data} />
+                            )}
+                        </div>
+
+                        <div className="mb-4">{parsedSessionDebrief?.success && (
+                            <AISessionReview
+                                review={
+                                    parsedSessionDebrief.data
+                                }
+                            />
+                        )}</div>
+
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold">
                                 Live notes
@@ -248,19 +365,33 @@ export default async function TutorSessionDetailPage({
                                 canStart={canStart}
                             />
 
-                            {session.status === "completed" && (
-                                <p className="text-sm text-gray-500">
-                                    Session completed. Notes are
-                                    read-only.
-                                </p>
+                            {session.status === "scheduled" && !sessionPlan && (
+                                <div className="mt-4 border-t pt-4">
+                                    <GeneratePlanButton
+                                        sessionId={session.id}
+                                    />
+                                </div>
                             )}
 
-                            {session.status ===
-                                "ai_reviewed" && (
-                                    <p className="text-sm text-gray-500">
-                                        AI review completed.
+                            {session.status === "completed" && !sessionDebrief && (
+                                <div className="mt-4 border-t pt-4">
+                                    <p className="mb-3 text-sm text-gray-500">
+                                        Session completed. Generate
+                                        the post-session review to
+                                        finish this session.
                                     </p>
-                                )}
+
+                                    <GenerateReviewButton
+                                        sessionId={session.id}
+                                    />
+                                </div>
+                            )}
+
+                            {session.status === "ai_reviewed" && (
+                                <p className="mt-4 text-sm text-gray-500">
+                                    AI review completed.
+                                </p>
+                            )}
                         </div>
                     </section>
                 </aside>
