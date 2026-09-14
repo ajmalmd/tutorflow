@@ -72,35 +72,52 @@ export default async function TutorDashboardPage() {
             </header>
 
             <section>
-                <h2 className="mb-4 text-xl font-semibold">Your students</h2>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                    <h2 className="text-xl font-semibold">
+                        Students
+                    </h2>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                    {students.map((student) => (
-                        <Link
-                            key={student.id}
-                            href={`/tutor/students/${student.id}`}
-                            className="block rounded-xl border bg-white p-5 transition hover:border-gray-400"
-                        >
-                            <h3 className="font-semibold">
-                                {student.name}
-                            </h3>
-
-                            <p className="mt-1 text-sm text-gray-600">
-                                {student.subject} · {student.current_level}
-                            </p>
-                        </Link>
-
-                    ))}
+                    <Link
+                        href="/tutor/students/new"
+                        className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
+                    >
+                        Create student
+                    </Link>
                 </div>
+
+                {students.length === 0 ? (
+                    <div className="rounded-xl border bg-white p-5 text-sm text-gray-500">
+                        Students not created.
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {students.map((student) => (
+                            <Link
+                                key={student.id}
+                                href={`/tutor/students/${student.id}`}
+                                className="block rounded-xl border bg-white p-5 transition hover:border-gray-400"
+                            >
+                                <h3 className="font-semibold">
+                                    {student.name}
+                                </h3>
+
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {student.subject} · {student.current_level}
+                                </p>
+                            </Link>
+
+                        ))}
+                    </div>
+                )}
             </section>
             <section className="mt-10">
                 <h2 className="mb-4 text-xl font-semibold">
-                    Active & upcoming sessions
+                    Active, Pending & Upcoming sessions
                 </h2>
 
                 {dashboardSessions.length === 0 ? (
                     <div className="rounded-xl border bg-white p-5 text-sm text-gray-500">
-                        No active or upcoming sessions.
+                        No active, pending or upcoming sessions.
                     </div>
                 ) : (
                     <div className="space-y-3">

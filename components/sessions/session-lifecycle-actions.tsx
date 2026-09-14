@@ -8,6 +8,8 @@ import {
     type SessionLifecycleState,
 } from "@/app/tutor/sessions/[id]/actions";
 
+import { useSessionNotes } from "@/components/sessions/session-notes-context";
+
 type SessionStatus =
     | "scheduled"
     | "in_progress"
@@ -27,13 +29,22 @@ const initialState: SessionLifecycleState = {
 export function SessionLifecycleActions({
     sessionId,
     status,
-    canStart
+    canStart,
 }: SessionLifecycleActionsProps) {
+    const { hasUsefulNotes } =
+        useSessionNotes();
+
     const startSessionForCurrentSession =
-        startSession.bind(null, sessionId);
+        startSession.bind(
+            null,
+            sessionId,
+        );
 
     const completeSessionForCurrentSession =
-        completeSession.bind(null, sessionId);
+        completeSession.bind(
+            null,
+            sessionId,
+        );
 
     const [
         startState,
@@ -59,7 +70,10 @@ export function SessionLifecycleActions({
                 <form action={startAction}>
                     <button
                         type="submit"
-                        disabled={startPending || !canStart}
+                        disabled={
+                            startPending ||
+                            !canStart
+                        }
                         className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {startPending
@@ -67,17 +81,22 @@ export function SessionLifecycleActions({
                             : "Start session"}
                     </button>
                 </form>
+
                 {!canStart && (
                     <p className="mt-2 text-sm text-gray-500">
-                        Available at the scheduled start time.
+                        Available at the
+                        scheduled start time.
                     </p>
                 )}
 
-                {startState.message && !startState.success && (
-                    <p className="mt-2 text-sm text-red-600">
-                        {startState.message}
-                    </p>
-                )}
+                {startState.message &&
+                    !startState.success && (
+                        <p className="mt-2 text-sm text-red-600">
+                            {
+                                startState.message
+                            }
+                        </p>
+                    )}
             </div>
         );
     }
@@ -88,7 +107,10 @@ export function SessionLifecycleActions({
                 <form action={completeAction}>
                     <button
                         type="submit"
-                        disabled={completePending}
+                        disabled={
+                            completePending ||
+                            !hasUsefulNotes
+                        }
                         className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {completePending
@@ -97,10 +119,20 @@ export function SessionLifecycleActions({
                     </button>
                 </form>
 
+                {!hasUsefulNotes && (
+                    <p className="mt-2 text-sm text-gray-500">
+                        Add meaningful session
+                        notes before completing
+                        the session.
+                    </p>
+                )}
+
                 {completeState.message &&
                     !completeState.success && (
                         <p className="mt-2 text-sm text-red-600">
-                            {completeState.message}
+                            {
+                                completeState.message
+                            }
                         </p>
                     )}
             </div>

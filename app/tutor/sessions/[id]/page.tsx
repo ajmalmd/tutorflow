@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { SessionStatusBadge } from "@/components/sessions/session-status-badge";
 import { SessionLifecycleActions } from "@/components/sessions/session-lifecycle-actions";
-
+import { SessionNotesProvider } from "@/components/sessions/session-notes-context";
 import { LiveNotes } from "@/components/sessions/live-notes";
 import { AISessionPlan } from "@/components/sessions/ai-session-plan";
 import { GeneratePlanButton } from "@/components/sessions/generate-plan-button";
@@ -178,9 +178,17 @@ export default async function TutorSessionDetailPage({
     const endsAt = new Date(session.ends_at);
 
     const now = new Date();
+
     const canStart =
         session.status === "scheduled" &&
         startsAt.getTime() <= now.getTime();
+
+    const canGeneratePlan =
+        session.status === "scheduled" &&
+        !sessionPlan;
+
+    const hasUsefulNotes =
+        session.live_notes.trim().length >= 10;
 
     const durationMinutes = Math.round(
         (endsAt.getTime() - startsAt.getTime()) / 60_000,
@@ -215,187 +223,188 @@ export default async function TutorSessionDetailPage({
                 </div>
             </header>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-                <div className="space-y-6">
-                    <section className="rounded-xl border bg-white p-6">
-                        <h2 className="text-lg font-semibold">
-                            Session details
-                        </h2>
-
-                        <dl className="mt-5 space-y-4">
-                            <div>
-                                <dt className="text-sm text-gray-500">
-                                    Student
-                                </dt>
-
-                                <dd className="mt-1 font-medium">
-                                    {student.name}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-sm text-gray-500">
-                                    Subject
-                                </dt>
-
-                                <dd className="mt-1">
-                                    {student.subject}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-sm text-gray-500">
-                                    Starts
-                                </dt>
-
-                                <dd className="mt-1">
-                                    {startsAt.toLocaleString()}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-sm text-gray-500">
-                                    Ends
-                                </dt>
-
-                                <dd className="mt-1">
-                                    {endsAt.toLocaleString()}
-                                </dd>
-                            </div>
-
-                            <div>
-                                <dt className="text-sm text-gray-500">
-                                    Duration
-                                </dt>
-
-                                <dd className="mt-1">
-                                    {durationMinutes} minutes
-                                </dd>
-                            </div>
-
-                            {session.completed_at && (
-                                <div>
-                                    <dt className="text-sm text-gray-500">
-                                        Completed
-                                    </dt>
-
-                                    <dd className="mt-1">
-                                        {new Date(
-                                            session.completed_at,
-                                        ).toLocaleString()}
-                                    </dd>
-                                </div>
-                            )}
-
-                            {session.reviewed_at && (
-                                <div>
-                                    <dt className="text-sm text-gray-500">
-                                        AI reviewed
-                                    </dt>
-
-                                    <dd className="mt-1">
-                                        {new Date(
-                                            session.reviewed_at,
-                                        ).toLocaleString()}
-                                    </dd>
-                                </div>
-                            )}
-                        </dl>
-                    </section>
-
-                    <section className="rounded-xl border bg-white p-6">
-
-                        <div className="mb-4">
-                            {parsedSessionPlan?.success && (
-                                <AISessionPlan plan={parsedSessionPlan.data} />
-                            )}
-                        </div>
-
-                        <div className="mb-4">{parsedSessionDebrief?.success && (
-                            <AISessionReview
-                                review={
-                                    parsedSessionDebrief.data
-                                }
-                            />
-                        )}</div>
-
-                        <div className="mb-4">
+            <SessionNotesProvider
+                initialNotes={session.live_notes}
+            >
+                <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+                    <div className="space-y-6">
+                        <section className="rounded-xl border bg-white p-6">
                             <h2 className="text-lg font-semibold">
-                                Live notes
+                                Session details
                             </h2>
 
-                            {session.status === "scheduled" && (
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Notes become editable after the session starts.
-                                </p>
-                            )}
+                            <dl className="mt-5 space-y-4">
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        Student
+                                    </dt>
 
-                            {session.status === "in_progress" && (
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Changes are saved automatically.
-                                </p>
-                            )}
+                                    <dd className="mt-1 font-medium">
+                                        {student.name}
+                                    </dd>
+                                </div>
 
-                            {(session.status === "completed" ||
-                                session.status === "ai_reviewed") && (
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        Subject
+                                    </dt>
+
+                                    <dd className="mt-1">
+                                        {student.subject}
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        Starts
+                                    </dt>
+
+                                    <dd className="mt-1">
+                                        {startsAt.toLocaleString()}
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        Ends
+                                    </dt>
+
+                                    <dd className="mt-1">
+                                        {endsAt.toLocaleString()}
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt className="text-sm text-gray-500">
+                                        Duration
+                                    </dt>
+
+                                    <dd className="mt-1">
+                                        {durationMinutes} minutes
+                                    </dd>
+                                </div>
+
+                                {session.completed_at && (
+                                    <div>
+                                        <dt className="text-sm text-gray-500">
+                                            Completed
+                                        </dt>
+
+                                        <dd className="mt-1">
+                                            {new Date(
+                                                session.completed_at,
+                                            ).toLocaleString()}
+                                        </dd>
+                                    </div>
+                                )}
+
+                                {session.reviewed_at && (
+                                    <div>
+                                        <dt className="text-sm text-gray-500">
+                                            AI reviewed
+                                        </dt>
+
+                                        <dd className="mt-1">
+                                            {new Date(
+                                                session.reviewed_at,
+                                            ).toLocaleString()}
+                                        </dd>
+                                    </div>
+                                )}
+                            </dl>
+                        </section>
+
+                        <section className="rounded-xl border bg-white p-6">
+
+                            <div className="mb-4">
+                                {parsedSessionPlan?.success && (
+                                    <AISessionPlan plan={parsedSessionPlan.data} />
+                                )}
+                            </div>
+
+                            <div className="mb-4">{parsedSessionDebrief?.success && (
+                                <AISessionReview
+                                    review={
+                                        parsedSessionDebrief.data
+                                    }
+                                />
+                            )}</div>
+
+                            <div className="mb-4">
+                                <h2 className="text-lg font-semibold">
+                                    Live notes
+                                </h2>
+
+                                {session.status === "scheduled" && (
                                     <p className="mt-1 text-sm text-gray-500">
-                                        This session is complete. Notes are read-only.
+                                        Notes become editable after the session starts.
                                     </p>
                                 )}
-                        </div>
 
-                        <LiveNotes
-                            sessionId={session.id}
-                            initialNotes={session.live_notes}
-                            editable={session.status === "in_progress"}
-                        />
-                    </section>
-                </div>
-
-                <aside>
-                    <section className="rounded-xl border bg-white p-6">
-                        <h2 className="font-semibold">
-                            Session actions
-                        </h2>
-
-                        <div className="mt-4">
-                            <SessionLifecycleActions
-                                sessionId={session.id}
-                                status={session.status}
-                                canStart={canStart}
-                            />
-
-                            {session.status === "scheduled" && !sessionPlan && (
-                                <div className="mt-4 border-t pt-4">
-                                    <GeneratePlanButton
-                                        sessionId={session.id}
-                                    />
-                                </div>
-                            )}
-
-                            {session.status === "completed" && !sessionDebrief && (
-                                <div className="mt-4 border-t pt-4">
-                                    <p className="mb-3 text-sm text-gray-500">
-                                        Session completed. Generate
-                                        the post-session review to
-                                        finish this session.
+                                {session.status === "in_progress" && (
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Changes are saved automatically.
                                     </p>
+                                )}
 
-                                    <GenerateReviewButton
-                                        sessionId={session.id}
-                                    />
-                                </div>
-                            )}
+                                {(session.status === "completed" ||
+                                    session.status === "ai_reviewed") && (
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            This session is complete. Notes are read-only.
+                                        </p>
+                                    )}
+                            </div>
 
-                            {session.status === "ai_reviewed" && (
-                                <p className="mt-4 text-sm text-gray-500">
-                                    AI review completed.
-                                </p>
-                            )}
-                        </div>
-                    </section>
-                </aside>
-            </div>
+                            <LiveNotes
+                                sessionId={session.id}
+                                editable={session.status === "in_progress"}
+                            />
+                        </section>
+                    </div>
+
+                    <aside>
+                        <section className="rounded-xl border bg-white p-6">
+                            <h2 className="font-semibold">
+                                Session actions
+                            </h2>
+
+                            <div className="mt-4">
+                                <SessionLifecycleActions
+                                    sessionId={session.id}
+                                    status={session.status}
+                                    canStart={canStart}
+                                />
+
+                                {canGeneratePlan && (
+                                    <div className="mt-4 border-t pt-4">
+                                        <GeneratePlanButton
+                                            sessionId={session.id}
+                                        />
+                                    </div>
+                                )}
+
+                                {session.status === "completed" && !sessionDebrief && (
+                                    <div className="mt-4 border-t pt-4">
+                                        <p className="mb-3 text-sm text-gray-500">
+                                            Session completed. Generate the post-session review to finish this session.
+                                        </p>
+
+                                        <GenerateReviewButton
+                                            sessionId={session.id}
+                                        />
+                                    </div>
+                                )}
+
+                                {session.status === "ai_reviewed" && (
+                                    <p className="mt-4 text-sm text-gray-500">
+                                        AI review completed.
+                                    </p>
+                                )}
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </SessionNotesProvider>
         </main>
     );
 }

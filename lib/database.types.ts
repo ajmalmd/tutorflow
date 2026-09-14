@@ -281,6 +281,31 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_auth_user_by_email: { Args: { p_email: string }; Returns: string }
+      get_my_session_debriefs: {
+        Args: never
+        Returns: {
+          created_at: string
+          homework: Json
+          id: string
+          next_focus: string
+          session_id: string
+          summary: string
+        }[]
+      }
+      get_my_sessions: {
+        Args: never
+        Returns: {
+          completed_at: string
+          created_at: string
+          ends_at: string
+          id: string
+          reviewed_at: string
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          topic: string
+        }[]
+      }
       save_session_debrief_and_review: {
         Args: {
           p_homework: Json

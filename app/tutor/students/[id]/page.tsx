@@ -69,29 +69,29 @@ export default async function TutorStudentDetailPage({ params }: TutorStudentDet
         throw new Error(sessionsError.message);
     }
 
-    const now = Date.now();
+    const now = new Date();
 
     const inProgressSessions = sessions.filter(
         (session) => session.status === "in_progress",
     );
 
+    const readyToStartSessions = sessions.filter(
+        (session) =>
+            session.status === "scheduled" &&
+            new Date(session.starts_at).getTime() <= now.getTime(),
+    );
+
     const upcomingSessions = sessions.filter(
         (session) =>
             session.status === "scheduled" &&
-            new Date(session.starts_at).getTime() >= now,
+            new Date(session.starts_at).getTime() > now.getTime(),
     );
 
-    const pastSessions = sessions
-        .filter(
-            (session) =>
-                session.status === "completed" ||
-                session.status === "ai_reviewed" ||
-                (
-                    session.status === "scheduled" &&
-                    new Date(session.starts_at).getTime() < now
-                ),
-        )
-        .reverse();
+    const pastSessions = sessions.filter(
+        (session) =>
+            session.status === "completed" ||
+            session.status === "ai_reviewed",
+    );
 
     return (
         <main className="mx-auto max-w-5xl p-8">
@@ -154,6 +154,14 @@ export default async function TutorStudentDetailPage({ params }: TutorStudentDet
                         <SessionList
                             title="Current session"
                             sessions={inProgressSessions}
+                            emptyMessage=""
+                        />
+                    )}
+
+                    {readyToStartSessions.length > 0 && (
+                        <SessionList
+                            title="Ready to Start"
+                            sessions={readyToStartSessions}
                             emptyMessage=""
                         />
                     )}

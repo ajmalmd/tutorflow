@@ -1,8 +1,14 @@
 import { requireStudent } from "@/lib/auth/get-current-user";
 import { createClient } from "@/lib/supabase/server";
+
 import { LogoutButton } from "@/components/ui/logout-button";
-import { SessionDebriefSchema } from "@/lib/ai/schemas/session-debrief";
 import { StudentReviewedSession } from "@/components/sessions/student-reviewed-session";
+
+import { SessionDebriefSchema } from "@/lib/ai/schemas/session-debrief";
+import {
+    getStudentDebriefs,
+    getStudentSessions,
+} from "@/lib/data/student-sessions";
 
 export const instant = false;
 
@@ -26,109 +32,41 @@ export default async function StudentDashboardPage() {
         throw new Error("Student profile not found.");
     }
 
-    const { data: sessions, error: sessionsError } = await supabase
-        .from("sessions")
-        .select(`
-            id,
-            topic,
-            starts_at,
-            ends_at,
-            status,
-            reviewed_at
-        `)
-        .eq(
-            "student_id",
-            student.id,
-        )
-        .order(
-            "starts_at",
-            {
-                ascending: false,
-            },
-        );
+    const sessions = await getStudentSessions();
 
-    if (sessionsError) {
-        throw new Error(
-            sessionsError.message,
-        );
-    }
+    const hasReviewedSessions = sessions.some(
+        (session) => session.status === "ai_reviewed",
+    );
 
-    const reviewedSessionIds =
-        sessions
-            .filter(
-                (session) =>
-                    session.status ===
-                    "ai_reviewed",
-            )
-            .map(
-                (session) =>
-                    session.id,
-            );
+    const debriefs = hasReviewedSessions
+        ? await getStudentDebriefs()
+        : [];
 
-    let debriefs: {
-        session_id: string;
-        summary: string;
-        homework: unknown;
-        next_focus: string;
-    }[] = [];
-
-    if (reviewedSessionIds.length > 0) {
-        const { data, error } = await supabase
-            .from("session_debriefs")
-            .select(`
-                session_id,
-                summary,
-                homework,
-                next_focus
-            `)
-            .in(
-                "session_id",
-                reviewedSessionIds,
-            );
-
-        if (error) {
-            throw new Error(
-                error.message,
-            );
+    const reviewBySessionId = new Map<
+        string,
+        {
+            summary: string;
+            homework: {
+                task: string;
+                instructions: string;
+            }[];
+            next_focus: string;
         }
-
-        debriefs = data ?? [];
-    }
-
-    const reviewBySessionId =
-        new Map<
-            string,
-            {
-                summary: string;
-                homework: {
-                    task: string;
-                    instructions: string;
-                }[];
-                next_focus: string;
-            }
-        >();
+    >();
 
     for (const debrief of debriefs) {
-        const parsed =
-            SessionDebriefSchema.safeParse({
-                summary:
-                    debrief.summary,
-
-                homework:
-                    debrief.homework,
-
-                next_focus:
-                    debrief.next_focus,
-            });
+        const parsed = SessionDebriefSchema.safeParse({
+            summary: debrief.summary,
+            homework: debrief.homework,
+            next_focus: debrief.next_focus,
+        });
 
         if (!parsed.success) {
             console.error(
                 "Invalid stored session debrief:",
                 {
-                    sessionId:
-                        debrief.session_id,
-                    error:
-                        parsed.error,
+                    sessionId: debrief.session_id,
+                    error: parsed.error,
                 },
             );
 
@@ -141,23 +79,25 @@ export default async function StudentDashboardPage() {
         );
     }
 
-    const upcomingSessions =
-        sessions.filter(
-            (session) =>
-                session.status === "scheduled" || session.status === "in_progress",
-        );
+    const upcomingSessions = sessions.filter(
+        (session) =>
+            session.status === "scheduled" ||
+            session.status === "in_progress",
+    );
 
-    const completedSessions =
-        sessions.filter(
-            (session) =>
-                session.status === "completed" || session.status === "ai_reviewed",
-        );
+    const completedSessions = sessions.filter(
+        (session) =>
+            session.status === "completed" ||
+            session.status === "ai_reviewed",
+    );
 
     return (
         <main className="mx-auto max-w-5xl p-8">
             <header className="mb-8 flex items-start justify-between">
                 <div>
-                    <p className="text-sm text-gray-500">Student portal</p>
+                    <p className="text-sm text-gray-500">
+                        Student portal
+                    </p>
 
                     <h1 className="text-3xl font-semibold">
                         Welcome, {student.name}
@@ -183,7 +123,7 @@ export default async function StudentDashboardPage() {
                                 key={session.id}
                                 className="rounded-xl border bg-white p-5"
                             >
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <h3 className="font-medium">
                                             {session.topic}
@@ -191,7 +131,7 @@ export default async function StudentDashboardPage() {
 
                                         <p className="mt-1 text-sm text-gray-500">
                                             {new Date(
-                                                session.starts_at
+                                                session.starts_at,
                                             ).toLocaleString()}
                                         </p>
                                     </div>
@@ -216,60 +156,48 @@ export default async function StudentDashboardPage() {
 
                     <div className="space-y-3">
                         {completedSessions.map((session) => {
-                            const startsAt =
-                                new Date(
-                                    session.starts_at,
-                                );
+                            const startsAt = new Date(
+                                session.starts_at,
+                            );
 
-                            const endsAt =
-                                new Date(
-                                    session.ends_at,
-                                );
+                            const endsAt = new Date(
+                                session.ends_at,
+                            );
 
-                            const durationMinutes =
-                                Math.round(
-                                    (
-                                        endsAt.getTime() -
-                                        startsAt.getTime()
-                                    ) / 60_000,
-                                );
+                            const durationMinutes = Math.round(
+                                (
+                                    endsAt.getTime() -
+                                    startsAt.getTime()
+                                ) / 60_000,
+                            );
 
-                            const review =
-                                reviewBySessionId.get(
-                                    session.id,
-                                );
+                            const review = reviewBySessionId.get(
+                                session.id,
+                            );
 
-
-                            {
-                                session.status === "ai_reviewed" && review && (
+                            if (session.status === "ai_reviewed" && review) {
+                                return (
                                     <StudentReviewedSession
                                         key={session.id}
-                                        topic={
-                                            session.topic
-                                        }
-                                        startsAt={
-                                            session.starts_at
-                                        }
-                                        durationMinutes={
-                                            durationMinutes
-                                        }
+                                        topic={session.topic}
+                                        startsAt={session.starts_at}
+                                        durationMinutes={durationMinutes}
                                         review={review}
                                     />
                                 );
                             }
 
-
-                            {
-                                session.status === "ai_reviewed" && !review && (
+                            if (session.status === "ai_reviewed" && !review) {
+                                return (
                                     <article
                                         key={session.id}
                                         className="rounded-xl border bg-white p-5"
                                     >
                                         <div className="flex flex-wrap items-start justify-between gap-4">
                                             <div>
-                                                <h2 className="font-semibold">
+                                                <h3 className="font-semibold">
                                                     {session.topic}
-                                                </h2>
+                                                </h3>
 
                                                 <p className="mt-2 text-sm text-gray-500">
                                                     {startsAt.toLocaleString()}
@@ -293,39 +221,27 @@ export default async function StudentDashboardPage() {
                                 >
                                     <div className="flex flex-wrap items-start justify-between gap-4">
                                         <div>
-                                            <h2 className="font-semibold">
-                                                {
-                                                    session.topic
-                                                }
-                                            </h2>
+                                            <h3 className="font-semibold">
+                                                {session.topic}
+                                            </h3>
 
                                             <p className="mt-2 text-sm text-gray-500">
-                                                {startsAt.toLocaleString()}
-                                                {" · "}
-                                                {
-                                                    durationMinutes
-                                                }{" "}
-                                                minutes
+                                                {startsAt.toLocaleString()}{" · "}{durationMinutes} minutes
                                             </p>
                                         </div>
 
                                         <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                                            Completed
+                                            Awaiting review
                                         </span>
                                     </div>
 
-                                    {session.status ===
-                                        "completed" && (
-                                            <p className="mt-4 text-sm text-gray-500">
-                                                Your tutor is
-                                                preparing the
-                                                session review.
-                                            </p>
-                                        )}
+                                    <p className="mt-4 text-sm text-gray-500">
+                                        Your tutor is preparing the
+                                        session review.
+                                    </p>
                                 </article>
                             );
-                        },
-                        )}
+                        })}
                     </div>
                 </section>
             )}
