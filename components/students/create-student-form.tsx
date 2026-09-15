@@ -1,24 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 
 import {
-    createStudent,
-    type CreateStudentState,
-} from "@/app/tutor/students/actions";
+    AlertCircle,
+    Eye,
+    EyeOff,
+    Loader2,
+    UserPlus,
+} from "lucide-react";
 
-const initialState: CreateStudentState = {
-    success: false,
-};
+import { createStudent, type CreateStudentState } from "@/app/tutor/students/actions";
+
+const initialState: CreateStudentState = { success: false };
 
 export function CreateStudentForm() {
-    const [
-        state,
-        action,
-        pending,
-    ] = useActionState(
-        createStudent,
-        initialState,
+    const [showPassword, setShowPassword] = useState(false);
+    const [state, action, pending] = useActionState(
+        createStudent, initialState
     );
 
     return (
@@ -26,157 +25,256 @@ export function CreateStudentForm() {
             action={action}
             className="space-y-6"
         >
+            {/* Basic information */}
             <div>
-                <label
-                    htmlFor="name"
-                    className="text-sm font-medium"
-                >
-                    Student name
-                </label>
+                <h2 className="text-sm font-semibold text-gray-900">
+                    Student information
+                </h2>
 
-                <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    disabled={pending}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                />
-
-                {state.errors?.name?.[0] && (
-                    <p className="mt-1 text-sm text-red-600">
-                        {
-                            state.errors
-                                .name[0]
-                        }
-                    </p>
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                    Set up the student's account and academic details.
+                </p>
             </div>
 
-            <div>
-                <label
-                    htmlFor="email"
-                    className="text-sm font-medium"
-                >
-                    Student email
-                </label>
+            <div className="grid gap-5 sm:grid-cols-2">
+                {/* Name */}
+                <div>
+                    <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700"
+                    >
+                        Student name
+                    </label>
 
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    disabled={pending}
-                    autoComplete="email"
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                />
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        required
+                        disabled={pending}
+                        placeholder="e.g. Alex Johnson"
+                        className="
+                    mt-2 h-11 w-full rounded-lg
+                    border border-gray-200 bg-white px-3
+                    text-sm text-gray-900 outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-not-allowed
+                    disabled:bg-gray-50
+                "
+                    />
 
-                {state.errors?.email?.[0] && (
-                    <p className="mt-1 text-sm text-red-600">
-                        {
-                            state.errors
-                                .email[0]
-                        }
-                    </p>
-                )}
+                    {state.errors?.name?.[0] && (
+                        <FieldError>
+                            {state.errors.name[0]}
+                        </FieldError>
+                    )}
+                </div>
+
+                {/* Email */}
+                <div>
+                    <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700"
+                    >
+                        Student email
+                    </label>
+
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        disabled={pending}
+                        autoComplete="email"
+                        placeholder="student@example.com"
+                        className="
+                    mt-2 h-11 w-full rounded-lg
+                    border border-gray-200 bg-white px-3
+                    text-sm text-gray-900 outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-not-allowed
+                    disabled:bg-gray-50
+                "
+                    />
+
+                    {state.errors?.email?.[0] && (
+                        <FieldError>
+                            {state.errors.email[0]}
+                        </FieldError>
+                    )}
+                </div>
             </div>
 
+            {/* Password */}
             <div>
                 <label
                     htmlFor="password"
-                    className="text-sm font-medium"
+                    className="block text-sm font-medium text-gray-700"
                 >
                     Temporary password
                 </label>
 
-                <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    minLength={8}
-                    disabled={pending}
-                    autoComplete="new-password"
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                />
+                <div className="relative mt-2">
+                    <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={8}
+                        disabled={pending}
+                        autoComplete="new-password"
+                        placeholder="Minimum 8 characters"
+                        className="
+                    h-11 w-full rounded-lg
+                    border border-gray-200 bg-white
+                    px-3 pr-10 text-sm text-gray-900
+                    outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-not-allowed
+                    disabled:bg-gray-50
+                "
+                    />
 
-                <p className="mt-1 text-xs text-gray-500">
-                    Used only when a new
-                    student account needs to
-                    be created.
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowPassword((current) => !current)
+                        }
+                        disabled={pending}
+                        aria-label={
+                            showPassword
+                                ? "Hide password"
+                                : "Show password"
+                        }
+                        className="
+                    absolute right-3 top-1/2
+                    -translate-y-1/2 text-gray-400
+                    transition hover:text-gray-700
+                    focus:outline-none
+                    disabled:cursor-not-allowed
+                "
+                    >
+                        {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                        ) : (
+                            <Eye className="h-4 w-4" />
+                        )}
+                    </button>
+                </div>
+
+                <p className="mt-1.5 text-xs leading-5 text-gray-500">
+                    Used when creating the student's login account.
                 </p>
 
-                {state.errors
-                    ?.password?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {
-                                state.errors
-                                    .password[0]
-                            }
-                        </p>
-                    )}
+                {state.errors?.password?.[0] && (
+                    <FieldError>
+                        {state.errors.password[0]}
+                    </FieldError>
+                )}
             </div>
 
+            {/* Subject + level */}
+            <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                    <label
+                        htmlFor="subject"
+                        className="block text-sm font-medium text-gray-700"
+                    >
+                        Subject
+                    </label>
+
+                    <input
+                        id="subject"
+                        name="subject"
+                        type="text"
+                        required
+                        disabled={pending}
+                        placeholder="e.g. Mathematics"
+                        className="
+                    mt-2 h-11 w-full rounded-lg
+                    border border-gray-200 bg-white px-3
+                    text-sm text-gray-900 outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-not-allowed
+                    disabled:bg-gray-50
+                "
+                    />
+
+                    {state.errors?.subject?.[0] && (
+                        <FieldError>
+                            {state.errors.subject[0]}
+                        </FieldError>
+                    )}
+                </div>
+
+                <div>
+                    <label
+                        htmlFor="currentLevel"
+                        className="block text-sm font-medium text-gray-700"
+                    >
+                        Current level
+                    </label>
+
+                    <input
+                        id="currentLevel"
+                        name="currentLevel"
+                        type="text"
+                        required
+                        disabled={pending}
+                        placeholder="e.g. Grade 10"
+                        className="
+                    mt-2 h-11 w-full rounded-lg
+                    border border-gray-200 bg-white px-3
+                    text-sm text-gray-900 outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-not-allowed
+                    disabled:bg-gray-50
+                "
+                    />
+
+                    {state.errors?.currentLevel?.[0] && (
+                        <FieldError>
+                            {state.errors.currentLevel[0]}
+                        </FieldError>
+                    )}
+                </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
+
+            {/* Learning profile */}
             <div>
-                <label
-                    htmlFor="subject"
-                    className="text-sm font-medium"
-                >
-                    Subject
-                </label>
+                <h2 className="text-sm font-semibold text-gray-900">
+                    Learning profile
+                </h2>
 
-                <input
-                    id="subject"
-                    name="subject"
-                    type="text"
-                    required
-                    disabled={pending}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                />
-
-                {state.errors
-                    ?.subject?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {
-                                state.errors
-                                    .subject[0]
-                            }
-                        </p>
-                    )}
+                <p className="mt-1 text-sm text-gray-500">
+                    Add context that will help personalize sessions and AI
+                    assistance.
+                </p>
             </div>
 
-            <div>
-                <label
-                    htmlFor="currentLevel"
-                    className="text-sm font-medium"
-                >
-                    Current level
-                </label>
-
-                <input
-                    id="currentLevel"
-                    name="currentLevel"
-                    type="text"
-                    required
-                    disabled={pending}
-                    className="mt-2 w-full rounded-lg border px-3 py-2"
-                />
-
-                {state.errors
-                    ?.currentLevel?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {
-                                state.errors
-                                    .currentLevel[0]
-                            }
-                        </p>
-                    )}
-            </div>
-
+            {/* Learning goals */}
             <div>
                 <label
                     htmlFor="learningGoals"
-                    className="text-sm font-medium"
+                    className="block text-sm font-medium text-gray-700"
                 >
                     Learning goals
                 </label>
@@ -186,27 +284,35 @@ export function CreateStudentForm() {
                     name="learningGoals"
                     rows={4}
                     disabled={pending}
-                    className="mt-2 w-full resize-y rounded-lg border px-3 py-2"
                     placeholder="What should the student improve or achieve?"
+                    className="
+                mt-2 min-h-28 w-full resize-y rounded-lg
+                border border-gray-200 bg-white p-3
+                text-sm leading-6 text-gray-900
+                outline-none transition
+                placeholder:text-gray-400
+                hover:border-gray-300
+                focus:border-gray-900
+                focus:ring-2 focus:ring-gray-900/10
+                disabled:cursor-not-allowed
+                disabled:bg-gray-50
+            "
                 />
 
-                {state.errors
-                    ?.learningGoals?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {
-                                state.errors
-                                    .learningGoals[0]
-                            }
-                        </p>
-                    )}
+                {state.errors?.learningGoals?.[0] && (
+                    <FieldError>
+                        {state.errors.learningGoals[0]}
+                    </FieldError>
+                )}
             </div>
 
+            {/* Areas to improve */}
             <div>
                 <label
                     htmlFor="weakAreas"
-                    className="text-sm font-medium"
+                    className="block text-sm font-medium text-gray-700"
                 >
-                    Weak areas
+                    Areas to improve
                 </label>
 
                 <textarea
@@ -214,37 +320,78 @@ export function CreateStudentForm() {
                     name="weakAreas"
                     rows={4}
                     disabled={pending}
-                    className="mt-2 w-full resize-y rounded-lg border px-3 py-2"
-                    placeholder="Topics or skills the student currently struggles with."
+                    placeholder="Topics or skills that need additional attention."
+                    className="
+                mt-2 min-h-28 w-full resize-y rounded-lg
+                border border-gray-200 bg-white p-3
+                text-sm leading-6 text-gray-900
+                outline-none transition
+                placeholder:text-gray-400
+                hover:border-gray-300
+                focus:border-gray-900
+                focus:ring-2 focus:ring-gray-900/10
+                disabled:cursor-not-allowed
+                disabled:bg-gray-50
+            "
                 />
 
-                {state.errors
-                    ?.weakAreas?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {
-                                state.errors
-                                    .weakAreas[0]
-                            }
-                        </p>
-                    )}
+                {state.errors?.weakAreas?.[0] && (
+                    <FieldError>
+                        {state.errors.weakAreas[0]}
+                    </FieldError>
+                )}
             </div>
 
-            {state.message &&
-                !state.success && (
-                    <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            {/* Server error */}
+            {state.message && !state.success && (
+                <div
+                    role="alert"
+                    className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700"
+                >
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+
+                    <p className="text-sm leading-5">
                         {state.message}
                     </p>
-                )}
+                </div>
+            )}
 
-            <button
-                type="submit"
-                disabled={pending}
-                className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-                {pending
-                    ? "Creating student..."
-                    : "Create student"}
-            </button>
+            {/* Submit */}
+            <div className="flex justify-end border-t border-gray-100 pt-5">
+                <button
+                    type="submit"
+                    disabled={pending}
+                    className="
+                flex h-10 items-center justify-center gap-2
+                rounded-lg bg-gray-900 px-4
+                text-sm font-medium text-white
+                transition hover:bg-gray-800
+                focus:outline-none focus:ring-2
+                focus:ring-gray-900 focus:ring-offset-2
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+            "
+                >
+                    {pending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <UserPlus className="h-4 w-4" />
+                    )}
+
+                    {pending
+                        ? "Creating student..."
+                        : "Create student"}
+                </button>
+            </div>
         </form>
+    );
+}
+
+function FieldError({ children }: { children: React.ReactNode }) {
+    return (
+        <p className="mt-1.5 flex items-start gap-1.5 text-sm text-red-600">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{children}</span>
+        </p>
     );
 }
