@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { AlertCircle, Check, Loader2 } from "lucide-react";
+
 import { saveLiveNotes } from "@/app/tutor/sessions/[id]/actions";
 import { useSessionNotes } from "@/components/sessions/session-notes-context";
 
@@ -10,22 +12,11 @@ type LiveNotesProps = {
     editable: boolean;
 };
 
-export function LiveNotes({
-    sessionId,
-    editable,
-}: LiveNotesProps) {
-    const {
-        notes,
-        setNotes,
-    } = useSessionNotes();
+export function LiveNotes({ sessionId, editable }: LiveNotesProps) {
+    const { notes, setNotes } = useSessionNotes();
 
     const [saveStatus, setSaveStatus] =
-        useState<
-            "idle" |
-            "saving" |
-            "saved" |
-            "error"
-        >("idle");
+        useState<"idle" | "saving" | "saved" | "error">("idle");
 
     const initialRender = useRef(true);
 
@@ -43,11 +34,7 @@ export function LiveNotes({
 
         const timeout = window.setTimeout(
             async () => {
-                const result =
-                    await saveLiveNotes(
-                        sessionId,
-                        notes,
-                    );
+                const result = await saveLiveNotes(sessionId, notes);
 
                 if (result.success) {
                     setSaveStatus("saved");
@@ -61,38 +48,58 @@ export function LiveNotes({
         return () => {
             window.clearTimeout(timeout);
         };
-    }, [
-        editable,
-        notes,
-        sessionId,
-    ]);
+    }, [editable, notes, sessionId]);
 
     return (
         <div>
             <textarea
                 value={notes}
-                onChange={(event) =>
-                    setNotes(
-                        event.target.value,
-                    )
-                }
+                onChange={(event) => setNotes(event.target.value)}
                 disabled={!editable}
                 rows={10}
-                className="w-full resize-y rounded-lg border p-3 text-sm disabled:bg-gray-50 disabled:text-gray-600"
-                placeholder="Write session notes..."
+                placeholder={
+                    editable
+                        ? "Write observations, progress, challenges, and important points from the session..."
+                        : "No session notes yet."
+                }
+                className="
+                    min-h-[220px] w-full resize-y rounded-lg
+                    border border-gray-200 bg-white p-4
+                    text-sm leading-6 text-gray-800
+                    outline-none transition
+                    placeholder:text-gray-400
+                    hover:border-gray-300
+                    focus:border-gray-900
+                    focus:ring-2 focus:ring-gray-900/10
+                    disabled:cursor-default
+                    disabled:bg-gray-50
+                    disabled:text-gray-600
+                "
             />
 
             {editable && (
-                <p className="mt-2 text-xs text-gray-500">
-                    {saveStatus === "saving" &&
-                        "Saving..."}
+                <div className="mt-2 flex min-h-5 items-center justify-end text-xs">
+                    {saveStatus === "saving" && (
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Saving...
+                        </span>
+                    )}
 
-                    {saveStatus === "saved" &&
-                        "Saved"}
+                    {saveStatus === "saved" && (
+                        <span className="flex items-center gap-1.5 text-gray-500">
+                            <Check className="h-3.5 w-3.5" />
+                            Saved
+                        </span>
+                    )}
 
-                    {saveStatus === "error" &&
-                        "Unable to save notes."}
-                </p>
+                    {saveStatus === "error" && (
+                        <span className="flex items-center gap-1.5 text-red-600">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            Unable to save notes
+                        </span>
+                    )}
+                </div>
             )}
         </div>
     );

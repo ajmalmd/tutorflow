@@ -3,15 +3,25 @@ import { notFound } from "next/navigation";
 
 import { requireTutor } from "@/lib/auth/get-current-user";
 import { createClient } from "@/lib/supabase/server";
+
+import {
+    ArrowLeft,
+    ArrowRight,
+    CalendarDays,
+    Clock,
+    BookOpen,
+    GraduationCap,
+    Target,
+    TriangleAlert,
+} from "lucide-react";
+
 import { ScheduleSessionForm } from "@/components/sessions/schedule-session-form";
 import { SessionStatusBadge } from "@/components/sessions/session-status-badge";
 
 export const instant = false;
 
 type TutorStudentDetailPageProps = {
-    params: Promise<{
-        id: string;
-    }>;
+    params: Promise<{ id: string }>;
 };
 
 export default async function TutorStudentDetailPage({ params }: TutorStudentDetailPageProps) {
@@ -94,96 +104,149 @@ export default async function TutorStudentDetailPage({ params }: TutorStudentDet
     );
 
     return (
-        <main className="mx-auto max-w-5xl p-8">
-            <div className="mb-6">
+        <main className="min-h-screen bg-gray-50">
+            <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+                {/* Back */}
                 <Link
                     href="/tutor"
-                    className="text-sm text-gray-500 hover:text-gray-900"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-900"
                 >
-                    ← Back to students
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to students
                 </Link>
-            </div>
 
-            <header className="mb-8">
-                <p className="text-sm text-gray-500">
-                    Student
-                </p>
+                {/* Student header */}
+                <header className="mb-8 mt-6">
+                    <div className="flex items-start gap-4">
+                        <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white shadow-sm sm:flex">
+                            <GraduationCap className="h-5 w-5" />
+                        </div>
 
-                <h1 className="mt-1 text-3xl font-semibold">
-                    {student.name}
-                </h1>
+                        <div>
+                            <p className="text-sm font-medium text-gray-500">
+                                Student
+                            </p>
 
-                <p className="mt-2 text-gray-600">
-                    {student.subject} · {student.current_level}
-                </p>
-            </header>
+                            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+                                {student.name}
+                            </h1>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-                <div className="space-y-8">
-                    <section className="rounded-xl border bg-white p-6">
-                        <h2 className="text-lg font-semibold">
-                            Learning profile
-                        </h2>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                                <span>{student.subject}</span>
 
-                        <div className="mt-5 space-y-5">
-                            <div>
-                                <p className="text-sm font-medium text-gray-500">
-                                    Learning goals
-                                </p>
+                                <span className="h-1 w-1 rounded-full bg-gray-300" />
 
-                                <p className="mt-1 whitespace-pre-wrap">
-                                    {student.learning_goals ||
-                                        "No learning goals added yet."}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-sm font-medium text-gray-500">
-                                    Weak areas
-                                </p>
-
-                                <p className="mt-1 whitespace-pre-wrap">
-                                    {student.weak_areas ||
-                                        "No weak areas added yet."}
-                                </p>
+                                <span>{student.current_level}</span>
                             </div>
                         </div>
-                    </section>
+                    </div>
+                </header>
 
-                    {inProgressSessions.length > 0 && (
-                        <SessionList
-                            title="Current session"
-                            sessions={inProgressSessions}
-                            emptyMessage=""
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+                    {/* Main content */}
+                    <div className="min-w-0 space-y-8">
+                        {/* Learning profile */}
+                        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
+                                    <BookOpen className="h-4 w-4 text-gray-600" />
+                                </div>
+
+                                <div>
+                                    <h2 className="font-semibold text-gray-900">
+                                        Learning profile
+                                    </h2>
+
+                                    <p className="mt-0.5 text-sm text-gray-500">
+                                        Goals and areas to focus on during sessions.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                                {/* Goals */}
+                                <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+                                    <div className="flex items-center gap-2">
+                                        <Target className="h-4 w-4 text-gray-500" />
+
+                                        <h3 className="text-sm font-semibold text-gray-900">
+                                            Learning goals
+                                        </h3>
+                                    </div>
+
+                                    {student.learning_goals ? (
+                                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+                                            {student.learning_goals}
+                                        </p>
+                                    ) : (
+                                        <p className="mt-3 text-sm leading-6 text-gray-400">
+                                            No learning goals added yet.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Weak areas */}
+                                <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+                                    <div className="flex items-center gap-2">
+                                        <TriangleAlert className="h-4 w-4 text-gray-500" />
+
+                                        <h3 className="text-sm font-semibold text-gray-900">
+                                            Areas to improve
+                                        </h3>
+                                    </div>
+
+                                    {student.weak_areas ? (
+                                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+                                            {student.weak_areas}
+                                        </p>
+                                    ) : (
+                                        <p className="mt-3 text-sm leading-6 text-gray-400">
+                                            No areas to improve added yet.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Sessions */}
+                        <div className="space-y-8">
+                            {inProgressSessions.length > 0 && (
+                                <SessionList
+                                    title="Current session"
+                                    sessions={inProgressSessions}
+                                    emptyMessage=""
+                                />
+                            )}
+
+                            {readyToStartSessions.length > 0 && (
+                                <SessionList
+                                    title="Ready to start"
+                                    sessions={readyToStartSessions}
+                                    emptyMessage=""
+                                />
+                            )}
+
+                            <SessionList
+                                title="Upcoming sessions"
+                                sessions={upcomingSessions}
+                                emptyMessage="No upcoming sessions."
+                            />
+
+                            <SessionList
+                                title="Past sessions"
+                                sessions={pastSessions}
+                                emptyMessage="No previous sessions."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Schedule */}
+                    <aside className="lg:sticky lg:top-6">
+                        <ScheduleSessionForm
+                            studentId={student.id}
                         />
-                    )}
-
-                    {readyToStartSessions.length > 0 && (
-                        <SessionList
-                            title="Ready to Start"
-                            sessions={readyToStartSessions}
-                            emptyMessage=""
-                        />
-                    )}
-
-                    <SessionList
-                        title="Upcoming sessions"
-                        sessions={upcomingSessions}
-                        emptyMessage="No upcoming sessions."
-                    />
-
-                    <SessionList
-                        title="Past sessions"
-                        sessions={pastSessions}
-                        emptyMessage="No previous sessions."
-                    />
+                    </aside>
                 </div>
-
-                <aside>
-                    <ScheduleSessionForm
-                        studentId={student.id}
-                    />
-                </aside>
             </div>
         </main>
     );
@@ -212,13 +275,26 @@ function SessionList({
 }) {
     return (
         <section>
-            <h2 className="mb-4 text-xl font-semibold">
-                {title}
-            </h2>
+            {/* Section heading */}
+            <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900">
+                    {title}
+                </h2>
+
+                {sessions.length > 0 && (
+                    <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
+                        {sessions.length}
+                    </span>
+                )}
+            </div>
 
             {sessions.length === 0 ? (
-                <div className="rounded-xl border bg-white p-5 text-sm text-gray-500">
-                    {emptyMessage}
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-5 py-6 text-center">
+                    <CalendarDays className="mx-auto h-5 w-5 text-gray-300" />
+
+                    <p className="mt-2 text-sm text-gray-500">
+                        {emptyMessage}
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -241,24 +317,69 @@ function SessionList({
                             <Link
                                 key={session.id}
                                 href={`/tutor/sessions/${session.id}`}
-                                className="block rounded-xl border bg-white p-5 transition hover:border-gray-400"
+                                className="
+                                    group block rounded-xl
+                                    border border-gray-200
+                                    bg-white p-5 shadow-sm
+                                    transition
+                                    hover:border-gray-300
+                                    hover:shadow-md
+                                    focus:outline-none
+                                    focus:ring-2
+                                    focus:ring-gray-900/10
+                                "
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 className="font-medium">
+                                <div className="flex items-center justify-between gap-5">
+                                    <div className="min-w-0">
+                                        <h3 className="truncate font-semibold text-gray-900">
                                             {session.topic}
                                         </h3>
 
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            {startsAt.toLocaleString()}
-                                        </p>
+                                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                                            <span className="flex items-center gap-1.5">
+                                                <CalendarDays className="h-3.5 w-3.5 shrink-0" />
 
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            {durationMinutes} minutes
-                                        </p>
+                                                {startsAt.toLocaleDateString(
+                                                    undefined,
+                                                    {
+                                                        weekday:
+                                                            "short",
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        year: "numeric",
+                                                    },
+                                                )}
+                                            </span>
+
+                                            <span className="flex items-center gap-1.5">
+                                                <Clock className="h-3.5 w-3.5 shrink-0" />
+
+                                                {startsAt.toLocaleTimeString(
+                                                    undefined,
+                                                    {
+                                                        hour: "numeric",
+                                                        minute: "2-digit",
+                                                    },
+                                                )}
+
+                                                {" · "}
+                                                {durationMinutes} min
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <SessionStatusBadge status={session.status} />
+                                    <div className="flex shrink-0 items-center gap-3">
+                                        <SessionStatusBadge
+                                            status={
+                                                session.status
+                                            }
+                                            startsAt={
+                                                session.starts_at
+                                            }
+                                        />
+
+                                        <ArrowRight className="hidden h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-500 sm:block" />
+                                    </div>
                                 </div>
                             </Link>
                         );
