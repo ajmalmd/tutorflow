@@ -1,7 +1,7 @@
 "use client";
 
 import { SyntheticEvent, useState } from "react";
-import { Eye, EyeOff, GraduationCap, Loader2, UserRound } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 
@@ -39,16 +39,6 @@ export default function LoginForm() {
         } finally {
             setLoading(false);
         }
-    }
-
-    function fillTutorDemo() {
-        setEmail("tutor@tutorflow.demo");
-        setPassword("TutorFlow123!");
-    }
-
-    function fillStudentDemo() {
-        setEmail("student@tutorflow.demo");
-        setPassword("Student123!");
     }
 
     return (
@@ -163,60 +153,6 @@ export default function LoginForm() {
 
                 {loading ? "Signing in..." : "Sign in"}
             </button>
-
-            <div className="flex items-center gap-3 py-1">
-                <div className="h-px flex-1 bg-gray-200" />
-                <span className="text-xs font-medium text-gray-400">
-                    DEMO ACCOUNTS
-                </span>
-                <div className="h-px flex-1 bg-gray-200" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-                <button
-                    type="button"
-                    onClick={fillTutorDemo}
-                    disabled={loading}
-                    className="
-                        flex h-10 items-center justify-center gap-2
-                        rounded-lg border border-gray-200 bg-white
-                        px-3 text-sm font-medium text-gray-700
-                        transition
-                        hover:border-gray-300 hover:bg-gray-50
-                        focus:outline-none
-                        focus:ring-2 focus:ring-gray-900/10
-                        disabled:cursor-not-allowed
-                        disabled:opacity-50
-                    "
-                >
-                    <GraduationCap className="h-4 w-4 text-gray-500" />
-                    Tutor
-                </button>
-
-                <button
-                    type="button"
-                    onClick={fillStudentDemo}
-                    disabled={loading}
-                    className="
-                        flex h-10 items-center justify-center gap-2
-                        rounded-lg border border-gray-200 bg-white
-                        px-3 text-sm font-medium text-gray-700
-                        transition
-                        hover:border-gray-300 hover:bg-gray-50
-                        focus:outline-none
-                        focus:ring-2 focus:ring-gray-900/10
-                        disabled:cursor-not-allowed
-                        disabled:opacity-50
-                    "
-                >
-                    <UserRound className="h-4 w-4 text-gray-500" />
-                    Student
-                </button>
-            </div>
-
-            <p className="text-center text-xs leading-5 text-gray-400">
-                Demo accounts are provided for evaluating TutorFlow.
-            </p>
         </form>
     );
 }
