@@ -17,6 +17,7 @@ import {
 
 import { ScheduleSessionForm } from "@/components/sessions/schedule-session-form";
 import { SessionStatusBadge } from "@/components/sessions/session-status-badge";
+import { ProgressSummaryCard } from "@/components/students/progress-summary-card";
 
 export const instant = false;
 
@@ -101,6 +102,10 @@ export default async function TutorStudentDetailPage({ params }: TutorStudentDet
         (session) =>
             session.status === "completed" ||
             session.status === "ai_reviewed",
+    );
+
+    const hasReviewedSessions = sessions.some(
+        (session) => session.status === "ai_reviewed",
     );
 
     return (
@@ -207,6 +212,12 @@ export default async function TutorStudentDetailPage({ params }: TutorStudentDet
                                 </div>
                             </div>
                         </section>
+
+                        {/* AI progress summary */}
+                        <ProgressSummaryCard
+                            studentId={student.id}
+                            hasReviewedSessions={hasReviewedSessions}
+                        />
 
                         {/* Sessions */}
                         <div className="space-y-8">

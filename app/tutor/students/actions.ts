@@ -94,10 +94,11 @@ export async function createStudent(
   const admin = createAdminClient();
 
   let studentUserId: string | null = null;
-  let createdStudentId: string | null = null;
+  let studentId: string | null = null;
 
   let createdAuthUser = false;
   let createdProfile = false;
+  let createdStudent = false;
 
   try {
     // -------------------------------------------------
@@ -209,17 +210,16 @@ export async function createStudent(
 
     if (existingStudent) {
       if (existingStudent.tutor_id === tutor.user.id) {
-        createdStudentId = existingStudent.id;
+        studentId = existingStudent.id;
       } else {
-        console.error("Existing student belongs to another tutor.", {
+        console.error("Cannot assign existing student to current tutor.", {
           userId: studentUserId,
           existingStudentId: existingStudent.id,
         });
 
-        // throw new Error("Student is already assigned.");
         return {
           success: false,
-          message: "Student is already assigned to another tutor.",
+          message: GENERIC_CREATE_ERROR,
         };
       }
     }
@@ -229,7 +229,7 @@ export async function createStudent(
     // already one of the current tutor's students.
     // -------------------------------------------------
 
-    if (!createdStudentId) {
+    if (!studentId) {
       if (!existingProfile) {
         const { error: profileInsertError } = await admin
           .from("profiles")
@@ -246,7 +246,7 @@ export async function createStudent(
         createdProfile = true;
       }
 
-      const { data: createdStudent, error: studentInsertError } = await admin
+      const { data: newStudent, error: studentInsertError } = await admin
         .from("students")
         .insert({
           tutor_id: tutor.user.id,
@@ -260,20 +260,19 @@ export async function createStudent(
         .select("id")
         .single();
 
-      if (studentInsertError || !createdStudent) {
+      if (studentInsertError || !newStudent) {
         throw studentInsertError ?? new Error("Student insert failed.");
       }
 
-      createdStudentId = createdStudent.id;
+      studentId = newStudent.id;
+      createdStudent = true;
     }
   } catch (error) {
     console.error("Failed to create student:", error);
 
-    // -------------------------------------------------
-    // Cleanup only records created during this request.
-    // Never delete an existing Auth user.
-    // -------------------------------------------------
-
+    // A newly-created Auth user owns all records created
+    // during this request. Deleting it cascades through
+    // profile/student records.
     if (createdAuthUser && studentUserId) {
       const { error: deleteUserError } =
         await admin.auth.admin.deleteUser(studentUserId);
@@ -284,17 +283,35 @@ export async function createStudent(
           deleteUserError,
         );
       }
-    } else if (createdProfile && studentUserId) {
-      const { error: deleteProfileError } = await admin
-        .from("profiles")
-        .delete()
-        .eq("id", studentUserId);
+    } else {
+      // Existing Auth user: never delete the Auth identity.
 
-      if (deleteProfileError) {
-        console.error(
-          "Failed to clean up newly-created profile:",
-          deleteProfileError,
-        );
+      if (createdStudent && studentId) {
+        const { error: deleteStudentError } = await admin
+          .from("students")
+          .delete()
+          .eq("id", studentId);
+
+        if (deleteStudentError) {
+          console.error(
+            "Failed to clean up newly-created student:",
+            deleteStudentError,
+          );
+        }
+      }
+
+      if (createdProfile && studentUserId) {
+        const { error: deleteProfileError } = await admin
+          .from("profiles")
+          .delete()
+          .eq("id", studentUserId);
+
+        if (deleteProfileError) {
+          console.error(
+            "Failed to clean up newly-created profile:",
+            deleteProfileError,
+          );
+        }
       }
     }
 
@@ -304,18 +321,14 @@ export async function createStudent(
     };
   }
 
-  if (!createdStudentId) {
+  if (!studentId) {
     return {
       success: false,
       message: GENERIC_CREATE_ERROR,
     };
   }
 
-  // -------------------------------------------------
-  // Keep redirect OUTSIDE try/catch.
-  // -------------------------------------------------
-
   revalidatePath("/tutor");
 
-  redirect(`/tutor/students/${createdStudentId}`);
+  redirect(`/tutor/students/${studentId}`);
 }

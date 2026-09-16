@@ -27,8 +27,16 @@ export function SessionLifecycleActions({
     status,
     canStart,
 }: SessionLifecycleActionsProps) {
-    const { hasUsefulNotes } =
-        useSessionNotes();
+    const {
+        hasUsefulNotes,
+        isSaving,
+        hasUnsavedChanges,
+    } = useSessionNotes();
+
+    const canComplete =
+        hasUsefulNotes &&
+        !isSaving &&
+        !hasUnsavedChanges;
 
     const startSessionForCurrentSession =
         startSession.bind(null, sessionId);
@@ -56,17 +64,17 @@ export function SessionLifecycleActions({
                         type="submit"
                         disabled={startPending || !canStart}
                         className="
-                        flex h-10 w-full items-center justify-center gap-2
-                        rounded-lg bg-gray-900 px-4
-                        text-sm font-medium text-white
-                        transition
-                        hover:bg-gray-800
-                        focus:outline-none
-                        focus:ring-2 focus:ring-gray-900
-                        focus:ring-offset-2
-                        disabled:cursor-not-allowed
-                        disabled:opacity-50
-                    "
+                            flex h-10 w-full items-center justify-center gap-2
+                            rounded-lg bg-gray-900 px-4
+                            text-sm font-medium text-white
+                            transition
+                            hover:bg-gray-800
+                            focus:outline-none
+                            focus:ring-2 focus:ring-gray-900
+                            focus:ring-offset-2
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
                     >
                         {startPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -112,19 +120,19 @@ export function SessionLifecycleActions({
                 <form action={completeAction}>
                     <button
                         type="submit"
-                        disabled={completePending || !hasUsefulNotes}
+                        disabled={completePending || !canComplete}
                         className="
-                        flex h-10 w-full items-center justify-center gap-2
-                        rounded-lg bg-gray-900 px-4
-                        text-sm font-medium text-white
-                        transition
-                        hover:bg-gray-800
-                        focus:outline-none
-                        focus:ring-2 focus:ring-gray-900
-                        focus:ring-offset-2
-                        disabled:cursor-not-allowed
-                        disabled:opacity-50
-                    "
+                            flex h-10 w-full items-center justify-center gap-2
+                            rounded-lg bg-gray-900 px-4
+                            text-sm font-medium text-white
+                            transition
+                            hover:bg-gray-800
+                            focus:outline-none
+                            focus:ring-2 focus:ring-gray-900
+                            focus:ring-offset-2
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
                     >
                         {completePending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -148,6 +156,18 @@ export function SessionLifecycleActions({
                         </p>
                     </div>
                 )}
+
+                {hasUsefulNotes &&
+                    (hasUnsavedChanges || isSaving) && (
+                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-gray-50 p-3">
+                            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-gray-400" />
+
+                            <p className="text-xs leading-5 text-gray-500">
+                                Waiting for session notes to save before
+                                completing.
+                            </p>
+                        </div>
+                    )}
 
                 {completeState.message &&
                     !completeState.success && (

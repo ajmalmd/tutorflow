@@ -11,7 +11,14 @@ import {
 type SessionNotesContextValue = {
     notes: string;
     setNotes: (notes: string) => void;
+
     hasUsefulNotes: boolean;
+
+    isSaving: boolean;
+    setIsSaving: (saving: boolean) => void;
+
+    hasUnsavedChanges: boolean;
+    setHasUnsavedChanges: (unsaved: boolean) => void;
 };
 
 const SessionNotesContext =
@@ -28,14 +35,30 @@ export function SessionNotesProvider({
 }: SessionNotesProviderProps) {
     const [notes, setNotes] = useState(initialNotes);
 
+    const [isSaving, setIsSaving] = useState(false);
+
+    const [hasUnsavedChanges, setHasUnsavedChanges] =
+        useState(false);
+
+    const hasUsefulNotes =
+        notes.trim().length >= 10;
+
     const value = useMemo(
         () => ({
             notes,
             setNotes,
-            hasUsefulNotes:
-                notes.trim().length >= 10,
+            hasUsefulNotes,
+            isSaving,
+            setIsSaving,
+            hasUnsavedChanges,
+            setHasUnsavedChanges,
         }),
-        [notes],
+        [
+            notes,
+            hasUsefulNotes,
+            isSaving,
+            hasUnsavedChanges,
+        ],
     );
 
     return (
@@ -50,7 +73,7 @@ export function useSessionNotes() {
 
     if (!context) {
         throw new Error(
-            "useSessionNotes must be used inside SessionNotesProvider",
+            "useSessionNotes must be used within SessionNotesProvider",
         );
     }
 

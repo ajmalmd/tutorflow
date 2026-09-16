@@ -13,7 +13,8 @@ type LiveNotesProps = {
 };
 
 export function LiveNotes({ sessionId, editable }: LiveNotesProps) {
-    const { notes, setNotes } = useSessionNotes();
+
+    const { notes, setNotes, setIsSaving, setHasUnsavedChanges } = useSessionNotes();
 
     const [saveStatus, setSaveStatus] =
         useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -30,16 +31,34 @@ export function LiveNotes({ sessionId, editable }: LiveNotesProps) {
             return;
         }
 
-        setSaveStatus("saving");
+        setHasUnsavedChanges(true);
 
         const timeout = window.setTimeout(
             async () => {
-                const result = await saveLiveNotes(sessionId, notes);
+                setIsSaving(true);
+                setSaveStatus("saving");
 
-                if (result.success) {
-                    setSaveStatus("saved");
-                } else {
+                try {
+                    const result = await saveLiveNotes(
+                        sessionId,
+                        notes,
+                    );
+
+                    if (result.success) {
+                        setHasUnsavedChanges(false);
+                        setSaveStatus("saved");
+                    } else {
+                        setSaveStatus("error");
+                    }
+                } catch (error) {
+                    console.error(
+                        "Unable to save session notes:",
+                        error,
+                    );
+
                     setSaveStatus("error");
+                } finally {
+                    setIsSaving(false);
                 }
             },
             700,
@@ -48,7 +67,13 @@ export function LiveNotes({ sessionId, editable }: LiveNotesProps) {
         return () => {
             window.clearTimeout(timeout);
         };
-    }, [editable, notes, sessionId]);
+    }, [
+        editable,
+        notes,
+        sessionId,
+        setHasUnsavedChanges,
+        setIsSaving,
+    ]);
 
     return (
         <div>
