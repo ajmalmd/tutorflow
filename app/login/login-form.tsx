@@ -1,48 +1,25 @@
 "use client";
 
-import { SyntheticEvent, useState } from "react";
+import { useActionState, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import { useRouter } from "next/navigation";
+import { login, type LoginState } from "@/app/login/actions";
 
-import { createClient } from "@/lib/supabase/client";
+const initialState: LoginState = {
+    success: false,
+};
 
 export default function LoginForm() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [showPassword, setShowPassword] =
+        useState(false);
 
-    const router = useRouter();
-
-    async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        setLoading(true);
-        setError("");
-
-        try {
-            const supabase = createClient();
-
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                setError(error.message);
-                return;
-            }
-
-            router.replace("/");
-            router.refresh();
-        } catch {
-            setError("Something went wrong. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const [state, action, pending] = useActionState(
+        login,
+        initialState,
+    );
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form action={action} className="space-y-5">
             <div className="space-y-2">
                 <label
                     htmlFor="email"
@@ -53,11 +30,11 @@ export default function LoginForm() {
 
                 <input
                     id="email"
+                    name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={pending}
                     placeholder="you@example.com"
                     className="
                         h-11 w-full rounded-lg border border-gray-200
@@ -67,6 +44,8 @@ export default function LoginForm() {
                         hover:border-gray-300
                         focus:border-gray-900
                         focus:ring-2 focus:ring-gray-900/10
+                        disabled:cursor-not-allowed
+                        disabled:bg-gray-50
                     "
                 />
             </div>
@@ -82,20 +61,23 @@ export default function LoginForm() {
                 <div className="relative">
                     <input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         required
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
+                        disabled={pending}
                         placeholder="Enter your password"
                         className="
-                            h-11 w-full rounded-lg border border-gray-200
-                            bg-white px-3 pr-11 text-sm text-gray-900
+                            h-11 w-full rounded-lg
+                            border border-gray-200 bg-white
+                            px-3 pr-11 text-sm text-gray-900
                             outline-none transition
                             placeholder:text-gray-400
                             hover:border-gray-300
                             focus:border-gray-900
                             focus:ring-2 focus:ring-gray-900/10
+                            disabled:cursor-not-allowed
+                            disabled:bg-gray-50
                         "
                     />
 
@@ -120,7 +102,7 @@ export default function LoginForm() {
                 </div>
             </div>
 
-            {error && (
+            {state.message && !state.success && (
                 <div
                     role="alert"
                     className="
@@ -129,13 +111,13 @@ export default function LoginForm() {
                         text-sm text-red-700
                     "
                 >
-                    {error}
+                    {state.message}
                 </div>
             )}
 
             <button
                 type="submit"
-                disabled={loading}
+                disabled={pending}
                 className="
                     flex h-11 w-full items-center justify-center gap-2
                     rounded-lg bg-gray-900 px-4
@@ -149,9 +131,9 @@ export default function LoginForm() {
                     disabled:opacity-60
                 "
             >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {pending && <Loader2 className="h-4 w-4 animate-spin" />}
 
-                {loading ? "Signing in..." : "Sign in"}
+                {pending ? "Signing in..." : "Sign in"}
             </button>
         </form>
     );
